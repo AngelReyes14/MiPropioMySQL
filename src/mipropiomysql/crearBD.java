@@ -1,59 +1,89 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package mipropiomysql;
+import java.util.List;
+import packeteria.Paqueteria;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
-import packeteria.Paqueteria;
+import java.sql.Connection;
+import java.util.ArrayList;
 
 public class crearBD extends JPanel {
     private JTextField txtNombreBd;
+    private Conectar conexionPanel;
+    private Inicio inicio;
 
-    public crearBD(Inicio inicio) {
-       
+    public crearBD(Inicio inicio, Conectar conexionPanel) {
+        this.conexionPanel = conexionPanel;
+        this.inicio = inicio;
+        setLayout(null);
 
-        // Crear un panel para los componentes de creación de base de datos con disposición BoxLayout vertical
-        JPanel panelCreacion = new JPanel();
-        panelCreacion.setLayout(new BoxLayout(panelCreacion, BoxLayout.Y_AXIS));
+        int red = 148;
+        int green = 184;
+        int blue = 215;
 
-        // Crear etiqueta y campo de texto para el nombre de la base de datos
+        Color backgroundColor = new Color(red, green, blue);
+        setBackground(backgroundColor);
+
         JLabel lblNombreBd = new JLabel("Nombre de la Base de Datos:");
+        lblNombreBd.setFont(new Font("Gotham Black", Font.BOLD, 22));
+        lblNombreBd.setForeground(Color.white);
         txtNombreBd = new JTextField(20);
-        panelCreacion.add(lblNombreBd);
-        panelCreacion.add(txtNombreBd);
+        lblNombreBd.setBounds(50, 50, 400, 30);
+        txtNombreBd.setBounds(50, 120, 300, 30);
+        add(lblNombreBd);
+        add(txtNombreBd);
 
-        // Crear el botón "Crear" para crear la base de datos
-        JButton btnCrearBd = new JButton("Crear");
-        panelCreacion.add(btnCrearBd);
+RoundButton btnCrearBd = new RoundButton("Crear", new Color(0x153f59), new Color(0x537491), Color.WHITE);
+        btnCrearBd.setFont(new Font("Gotham Black", Font.BOLD, 20));
+        btnCrearBd.setForeground(Color.WHITE);
+        btnCrearBd.setBounds(50, 180, 120, 40);
+        add(btnCrearBd);
 
-        // Agregar el panel de creación a la ventana de Crear_Base_Datos
-        add(panelCreacion);
-
-        // Agregar un ActionListener al botón "Crear"
         btnCrearBd.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                // Obtener el nombre de la base de datos desde el campo de texto
                 String nombreBd = txtNombreBd.getText();
 
-                // Crear una instancia de Paqueteria
-                int tu_puerto = 3306; // Reemplaza 3306 con el número de puerto correcto
-                Paqueteria paqueteria = new Paqueteria("localhost", "root","12345", tu_puerto);
+                if (!conexionPanel.isConexionEstablecida()) {
+                    JOptionPane.showMessageDialog(crearBD.this, "No hay una conexión establecida.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
 
-                // Llama al método crearBd con el nombre de la base de datos
-                paqueteria.crearBd(nombreBd);
+                Connection conexion = conexionPanel.getConexion();
+                if (conexion == null) {
+                    JOptionPane.showMessageDialog(crearBD.this, "La conexión no es válida.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
 
-                // Muestra un mensaje emergente
-                JOptionPane.showMessageDialog(crearBD.this, "La base de datos '" + nombreBd + "' ha sido creada.", "Base de Datos Creada", JOptionPane.INFORMATION_MESSAGE);
+                if (nombreBd.isEmpty()) {
+                    JOptionPane.showMessageDialog(crearBD.this, "Por favor, coloca el nombre de la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
 
-                // Cierra la ventana de Crear_Base_Datos
+                try {
+                    Paqueteria paqueteria = new Paqueteria(conexionPanel.getHost(), conexionPanel.getUsuario(), conexionPanel.getContraseña(), conexionPanel.getPuerto());
+
+                    if (paqueteria.getConexion() == null) {
+                        JOptionPane.showMessageDialog(crearBD.this, "Error al conectar a la base de datos.", "Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+
+                    List<String> basesDeDatosExistente = paqueteria.obtenerBasesDeDatos();
+                    if (basesDeDatosExistente.contains(nombreBd)) {
+                        JOptionPane.showMessageDialog(crearBD.this, "El nombre '" + nombreBd + "' ya existe.", "Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+
+                    paqueteria.crearBd(nombreBd);
+
+                    JOptionPane.showMessageDialog(crearBD.this, "La base de datos '" + nombreBd + "' ha sido creada.", "Base de Datos Creada", JOptionPane.INFORMATION_MESSAGE);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(crearBD.this, "Error al crear la base de datos: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
         });
 
-        // Hacer visible la ventana de Crear_Base_Datos
         setVisible(true);
     }
 
@@ -62,4 +92,3 @@ public class crearBD extends JPanel {
         });
     }
 }
-

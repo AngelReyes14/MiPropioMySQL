@@ -1,7 +1,4 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
+
 package mipropiomysql;
 
 import packeteria.Paqueteria;
@@ -16,6 +13,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.List;
+import javax.swing.table.JTableHeader;
 import javax.swing.table.TableRowSorter;
 
 public class tablaRegistros extends JFrame {
@@ -30,6 +28,7 @@ public class tablaRegistros extends JFrame {
     public tablaRegistros(String nombreBd, String nombreTabla) {
         this.nombreBd = nombreBd;
         this.nombreTabla = nombreTabla;
+        Color colorFondo = new Color(180, 212, 239);
 
         setTitle("Registros de " + nombreTabla);
         setSize(800, 400);
@@ -44,15 +43,16 @@ public class tablaRegistros extends JFrame {
 
         // Crear un panel para los botones
         JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(new Color(148, 184, 215));  // Cambia los valores RGB según tu preferencia
         panel.add(scrollPane, BorderLayout.CENTER);
 
         // Crear un panel para los botones
         JPanel botonesPanel = new JPanel();
 
         // Agregar los botones al panel de botones
-        botonesPanel.add(crearBoton("Ingresar Registro", e -> mostrarDialogoIngresarRegistro()));
-        botonesPanel.add(crearBoton("Eliminar Registro", e -> eliminarRegistroSeleccionado()));
-        botonesPanel.add(crearBoton("Actualizar Registro", e -> mostrarDialogoActualizarRegistro()));
+        botonesPanel.add(crearBotonRedondo("Ingresar Registro", e -> mostrarDialogoIngresarRegistro()));
+botonesPanel.add(crearBotonRedondo("Eliminar Registro", e -> eliminarRegistroSeleccionado()));
+botonesPanel.add(crearBotonRedondo("Actualizar Registro", e -> mostrarDialogoActualizarRegistro()));
 
         // Agregar el panel de botones al panel principal
         panel.add(botonesPanel, BorderLayout.SOUTH);
@@ -66,17 +66,25 @@ public class tablaRegistros extends JFrame {
         for (String columnName : columnNames) {
             tableModel.addColumn(columnName);
         }
-
+        
+        JTableHeader tableHeader = table.getTableHeader();
+        tableHeader.setForeground(Color.WHITE);  // Cambia el color según tus preferencias
+tableHeader.setBackground(new Color(0x557996)); // Reemplaza 255, 0, 0 con los componentes RGB del color deseado
+table.setBackground(colorFondo);
         // Cargar los datos automáticamente al crear la ventana
         cargarDatos();
         configurarEventos();
     }
 
-    private JButton crearBoton(String texto, ActionListener listener) {
-        JButton button = new JButton(texto);
-        button.addActionListener(listener);
-        return button;
-    }
+   private RoundButton crearBotonRedondo(String texto, ActionListener listener) {
+    Color backgroundColor = new Color(0x153f59);
+    Color hoverColor = new Color(0x537491);
+    Color textColor = Color.WHITE;
+
+    RoundButton button = new RoundButton(texto, backgroundColor, hoverColor, textColor);
+    button.addActionListener(listener);
+    return button;
+}
 
     private void cargarDatos() {
         // Obtener registros existentes y agregarlos a la tabla
@@ -191,12 +199,14 @@ public class tablaRegistros extends JFrame {
 
             // Mostrar la consulta SQL antes de realizar la inserción
             String query = paqueteria.generarInsertQuery(nombreTabla, columnNames, rowData);
-            JOptionPane.showMessageDialog(dialog, "Consulta SQL:\n" + query, "Consulta SQL", JOptionPane.INFORMATION_MESSAGE);
+            int confirmacion = JOptionPane.showConfirmDialog(dialog, "¿Seguro que quieres ingresar este registro?\nConsulta SQL:\n" + query, "Confirmar Registro", JOptionPane.YES_NO_OPTION);
 
-            // Realizar la inserción
-            tableModel.addRow(rowData);
-            paqueteria.insertarRegistro(nombreBd, nombreTabla, rowData);
-            dialog.dispose();
+            // Realizar la inserción si el usuario elige "Sí"
+            if (confirmacion == JOptionPane.YES_OPTION) {
+                tableModel.addRow(rowData);
+                paqueteria.insertarRegistro(nombreBd, nombreTabla, rowData);
+                dialog.dispose();
+            }
         }
     });
 
@@ -204,6 +214,8 @@ public class tablaRegistros extends JFrame {
     dialog.add(dialogPanel);
     dialog.setVisible(true);
 }
+
+   
     // Método para eliminar el registro seleccionado
   private void eliminarRegistroSeleccionado() {
     int selectedRow = table.getSelectedRow();
@@ -234,7 +246,7 @@ public class tablaRegistros extends JFrame {
     }
 }
 
-    // Método para mostrar el cuadro de diálogo de actualización de registro
+ // Método para mostrar el cuadro de diálogo de actualización de registro
 private void mostrarDialogoActualizarRegistro() {
     int selectedRow = table.getSelectedRow();
     if (selectedRow >= 0) {
@@ -244,11 +256,13 @@ private void mostrarDialogoActualizarRegistro() {
             rowData[col] = (String) tableModel.getValueAt(modelRow, col);
         }
 
-        // Añadir el código necesario para abrir un cuadro de diálogo o
-        // utilizar la lógica que necesites para obtener los nuevos valores
-        // para actualizar el registro.
+        // Obtener los nombres de las columnas
         String[] columnNames = paqueteria.obtenerNombresColumnas(nombreBd, nombreTabla);
+
+        // Crear un array de Strings para almacenar los nuevos valores
         String[] newValues = new String[columnNames.length];
+
+        // Solicitar al usuario que ingrese los nuevos valores
         for (int i = 0; i < columnNames.length; i++) {
             String newValue = JOptionPane.showInputDialog("Ingrese el nuevo valor para " + columnNames[i]);
             newValues[i] = newValue;
@@ -258,24 +272,40 @@ private void mostrarDialogoActualizarRegistro() {
         String condition = columnNames[0] + " = '" + rowData[0] + "'";
 
         // Actualizar el registro en la base de datos
-        boolean exitoso = paqueteria.actualizarRegistro(nombreBd, nombreTabla, columnNames, newValues, condition);
+       // Actualizar el registro en la base de datos
+// Actualizar el registro en la base de datos
+boolean exitoso = paqueteria.actualizarRegistro(nombreBd, nombreTabla, columnNames, newValues, condition);
 
-        if (exitoso) {
-            // Actualizar los datos en la tabla
-            for (int col = 0; col < tableModel.getColumnCount(); col++) {
-                tableModel.setValueAt(newValues[col], modelRow, col);
-            }
+if (exitoso) {
+    // Actualizar los datos en la tabla
+    for (int col = 0; col < tableModel.getColumnCount(); col++) {
+        tableModel.setValueAt(newValues[col], modelRow, col);
+    }
 
-            // Mostrar la consulta de actualizar completa en la ventana emergente
-            String updateQuery = paqueteria.generarUpdateQuery(nombreTabla, columnNames, newValues, condition);
-            JOptionPane.showMessageDialog(this, "Consulta SQL:\n" + updateQuery, "Consulta SQL de Actualización", JOptionPane.INFORMATION_MESSAGE);
-        } else {
-            JOptionPane.showMessageDialog(this, "Error al actualizar el registro.", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    } else {
-        JOptionPane.showMessageDialog(this, "Por favor, seleccione un registro para actualizar.", "Advertencia", JOptionPane.WARNING_MESSAGE);
+    // Construir la consulta de actualización
+    String updateQuery = paqueteria.construirConsultaUpdate(nombreTabla, columnNames, newValues, condition);
+
+    // Mostrar mensaje de éxito con la consulta SQL
+    int confirmacion = JOptionPane.showConfirmDialog(this, 
+            "Registro actualizado correctamente.\n¿Seguro que deseas actualizar estos datos?\nConsulta SQL:\n" + updateQuery, 
+            "Éxito", 
+            JOptionPane.YES_NO_OPTION, 
+            JOptionPane.INFORMATION_MESSAGE);
+
+    // Si el usuario elige "Sí", imprimir la consulta SQL en la consola
+    if (confirmacion == JOptionPane.YES_OPTION) {
+        System.out.println("Consulta SQL:\n" + updateQuery);
+    }
+} else {
+    // Mostrar mensaje de error
+    JOptionPane.showMessageDialog(this, "Error al actualizar el registro.", "Error", JOptionPane.ERROR_MESSAGE);
+}
+
     }
 }
+
+
+
 
 
     public static void main(String[] args) {

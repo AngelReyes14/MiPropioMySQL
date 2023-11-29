@@ -21,20 +21,23 @@ public class Inicio extends JFrame {
     private CardLayout cardLayout;
     private ImageIcon inicioImage; // Imagen para la pantalla de inicio
     private JPanel panelDerecho;
+    private tablas tablasPanel;
+    private Paqueteria paqueteria;
 
 
 
     public Inicio() {
+        
          getContentPane().setBackground(new Color(255, 0, 0));
-        panelDerecho = new JPanel();
         setTitle("Mi propio gestor de base de datos");
-                setExtendedState(JFrame.MAXIMIZED_BOTH); // Establecer el estado de la ventana a pantalla completa
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setSize(900, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         JPanel panelIzquierdo = new JPanel();
         panelIzquierdo.setPreferredSize(new Dimension(250, 600));
-        panelIzquierdo.setBackground(new Color(190, 140, 190));
+        panelIzquierdo.setBackground(new Color(0x557996));
+                conectarPanel = new Conectar(this);
 
         listModel = new DefaultListModel<>();
         listaBD = new JList<>(listModel);
@@ -42,22 +45,33 @@ public class Inicio extends JFrame {
         scrollPane.setPreferredSize(new Dimension(230, 500));
 
         panelIzquierdo.add(scrollPane);
+                panelDerecho = new JPanel();
 
-        JPanel panelDerecho = new JPanel();
         cardLayout = new CardLayout();
         panelDerecho.setPreferredSize(new Dimension(600, 600));
-        panelDerecho.setBackground(new Color(153, 153, 255));
+panelDerecho.setBackground(Color.decode("#FFFFFF"));  // Puedes cambiar este valor hexadecimal según tu preferencia
         conectarPanel = new Conectar(this);
-        crearBD = new crearBD (this);
-        descripcionBD = new descripcionBD (this);
-        descripcionBD.setLocation(0, 0);
+        crearBD = new crearBD(this, conectarPanel);
+        descripcionBD = new descripcionBD(this);
+    descripcionBD.setLocation(0, 0);
 consultasBD = new consultas(this);
+    tablasPanel = new tablas(this);
 
-        panelDerecho.setLayout(cardLayout);
-        panelDerecho.add(conectarPanel, "ConectarPanel");
-        panelDerecho.add(crearBD, "Crear_Base_DatosPanel");
-        panelDerecho.add(descripcionBD, "Bases_Datos_descPanel");
+
+panelDerecho.setLayout(cardLayout);
+panelDerecho.add(conectarPanel, "ConectarPanel");
+panelDerecho.add(crearBD, "Crear_Base_DatosPanel");
+panelDerecho.add(descripcionBD, "descripcionBDPanel");
         panelDerecho.add(consultasBD, "Consultas");
+            panelDerecho.add(tablasPanel, "Crear_TablasPanel");
+
+
+// ... (código existente)
+
+        panelDerecho.remove(descripcionBD);
+panelDerecho.add(descripcionBD, "Bases_Datos_descPanel");
+panelDerecho.revalidate();
+panelDerecho.repaint();
 
         ImageIcon originalIcon = new ImageIcon(getClass().getResource("GBD.jpg"));
         Image originalImage = originalIcon.getImage();
@@ -69,12 +83,15 @@ consultasBD = new consultas(this);
 
 
          JPanel inicioPanel = new JPanel();
+         inicioPanel.setBackground(new Color(148,184,215));
         inicioPanel.setLayout(new BorderLayout());
         JLabel imageLabel = new JLabel(inicioImage);
         inicioPanel.add(imageLabel, BorderLayout.CENTER);
 
         // Agregar el nuevo panel al panelDerecho existente (en lugar de crear una nueva instancia)
         panelDerecho.add(inicioPanel, "Inicio");
+        panelDerecho.setBackground(Color.decode("#FFFFFF"));  // Puedes cambiar este valor hexadecimal según tu preferencia
+
         // Crear un nuevo panel para mostrar la imagen
    
  try {
@@ -129,22 +146,27 @@ consultasBD = new consultas(this);
         });
         menu.add(crearBdMenuItem);
 
-        JMenuItem crearTablasMenuItem = new JMenuItem("Crear Tablas");
-        crearTablasMenuItem.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                tablas a = new tablas();
-                a.setVisible(true);
-            }
-        });
+       JMenuItem crearTablasMenuItem = new JMenuItem("Crear Tablas");
+crearTablasMenuItem.addActionListener(new ActionListener() {
+    public void actionPerformed(ActionEvent e) {
+        mostrarPanelTablas(); // Llama al método para mostrar el TablasPanel
+    }
+});
+
         
         
+  
         JMenuItem basesDeDatosMenuItem = new JMenuItem("Bases de Datos");
     basesDeDatosMenuItem.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
             cardLayout.show(panelDerecho, "Bases_Datos_descPanel");
         }
     });
-        menu.add(basesDeDatosMenuItem);
+        
+
+menu.add(basesDeDatosMenuItem);
+
+
         menu.add(crearTablasMenuItem);
 
         menuBar.add(menu);
@@ -160,10 +182,14 @@ listaBD.addListSelectionListener(new ListSelectionListener() {
     public void valueChanged(ListSelectionEvent e) {
         if (!e.getValueIsAdjusting()) {
             String selectedDb = getSelectedDatabase();
-            consultasBD.onDatabaseSelected(selectedDb);
+            // Llama al método onDatabaseSelected en Bases_Datos_desc para cargar las tablas y habilitar los botones
+            descripcionBD.onDatabaseSelected(selectedDb);
+            // Añade esta línea para actualizar el nombre de la base de datos en el JTextField
+            tablasPanel.actualizarNombreBaseDeDatos(selectedDb);
         }
     }
 });
+
 
 
 
@@ -172,44 +198,77 @@ listaBD.addListSelectionListener(new ListSelectionListener() {
         
         add(panelIzquierdo, BorderLayout.WEST);
         add(panelDerecho, BorderLayout.CENTER);
-      listaBD.addListSelectionListener(new ListSelectionListener() {
-    public void valueChanged(ListSelectionEvent e) {
-        if (!e.getValueIsAdjusting()) {
-            String selectedDb = getSelectedDatabase();
-            // Llama al método onDatabaseSelected en Bases_Datos_desc para cargar las tablas y habilitar los botones
-            descripcionBD.onDatabaseSelected(selectedDb);
-        }
-    }
-});
+    listaBD.addListSelectionListener(new ListSelectionListener() {
+            public void valueChanged(ListSelectionEvent e) {
+                if (!e.getValueIsAdjusting()) {
+                    String selectedDb = getSelectedDatabase();
+                    consultasBD.onDatabaseSelected(selectedDb);
+                }
+            }
+        });
 
     }
-    
+     public void mostrarPanelDescripcionBD() {
+        cardLayout.show(panelDerecho, "Bases_Datos_descPanel");
+        panelDerecho.revalidate();
+        panelDerecho.repaint();
+    }
+
+public void mostrarPanelTablas() {
+    cardLayout.show(panelDerecho, "Crear_TablasPanel");
+    panelDerecho.revalidate();
+    panelDerecho.repaint();
+}
 
  public JPanel getPanelDerecho() {
         return panelDerecho;
     }
  
- public void cargarBasesDeDatos(Paqueteria paqueteria) {
-    listModel.clear();
+  public void cargarBasesDeDatos(Paqueteria paqueteria) {
+        listModel.clear();
 
-    List<String> basesDeDatos = paqueteria.listarBasesDeDatos();
+        List<String> basesDeDatos = paqueteria.listarBasesDeDatos();
 
-    for (String nombreBd : basesDeDatos) {
-        listModel.addElement(nombreBd);
+        for (String nombreBd : basesDeDatos) {
+            listModel.addElement(nombreBd);
+        }
+
+        // Establecer el estado de conexión
     }
-
-    // Después de cargar las bases de datos, selecciona la primera (si hay alguna)
-    if (!basesDeDatos.isEmpty()) {
-        listaBD.setSelectedIndex(0);
-        String selectedDb = getSelectedDatabase();
-        descripcionBD.onDatabaseSelected(selectedDb);
+  
+ public Conectar getConectarPanel() {
+        return conectarPanel;
     }
-}
-
 
 public String getSelectedDatabase() {
     return listaBD.getSelectedValue();
 }
+
+    
+public void mostrarPanel() {
+    System.out.println("Mostrando panel en DescripcionBD");
+    System.out.println("cardLayout: " + cardLayout);
+    System.out.println("panelDerecho: " + panelDerecho);
+
+    if (panelDerecho != null) {
+        // Mostrar el panel "Bases_Datos_descPanel" y ocultar los demás
+        conectarPanel.setVisible(false);
+        crearBD.setVisible(false);
+        descripcionBD.setVisible(true);
+        consultasBD.setVisible(false);
+
+        // Asegurar que el panelDerecho se repinte
+        panelDerecho.revalidate();
+        panelDerecho.repaint();
+    } else {
+        System.out.println("panelDerecho es nulo");
+    }
+}
+
+
+    public CardLayout getCardLayout() {
+        return cardLayout;
+    }
 
     public static void main(String[] args) {
     SwingUtilities.invokeLater(() -> {

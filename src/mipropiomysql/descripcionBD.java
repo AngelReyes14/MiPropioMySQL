@@ -1,8 +1,5 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package mipropiomysql;
+
 import packeteria.Paqueteria;
 import javax.swing.*;
 import java.awt.*;
@@ -27,22 +24,32 @@ public class descripcionBD extends JPanel {
 
     public descripcionBD(Inicio inicio) {
         this.inicio = inicio;
+         setBackground(new Color(230, 204, 255));
 
         // Crear la instancia de Paqueteria y ajustar los valores de conexión según tus necesidades
         paqueteria = new Paqueteria("localhost", "root", "12345", 3306);
+        int red = 148;
+        int green = 184;
+        int blue = 215;
 
         // Panel derecho para mostrar las tablas
         JPanel panelDerecho = new JPanel();
         panelDerecho.setPreferredSize(new Dimension(550, 600));
-        panelDerecho.setBackground(new Color(153, 153, 255)); // Color morado más oscuro
+         // Crear un objeto Color con los valores RGB
+        Color backgroundColor = new Color(red, green, blue);
+
+        // Establecer el color de fondo del panel
+        setBackground(backgroundColor);
 
         // Crear un modelo de lista para las tablas
         listModelTablas = new DefaultListModel<>();
         listaTablas = new JList<>(listModelTablas);
 
         // Botón "Ingresar Datos"
-        ingresarDatosButton = new JButton("Ingresar Datos");
-        ingresarDatosButton.setEnabled(false); // Inicialmente deshabilitado
+ingresarDatosButton = new RoundButton("Ingresar Datos", new Color(0x153f59), new Color(0x537491), Color.WHITE);
+ingresarDatosButton.setEnabled(false);
+ingresarDatosButton.setForeground(Color.WHITE); // Establecer color de texto
+
 
         // ActionListener para el botón "Ingresar Datos"
         ingresarDatosButton.addActionListener(new ActionListener() {
@@ -80,8 +87,10 @@ tableModel.addTableModelListener(new TableModelListener() {
         });
 
         // Botón "Describir Tabla"
-        describirTablaButton = new JButton("Describir Tabla");
-        describirTablaButton.setEnabled(false); // Inicialmente deshabilitado
+       describirTablaButton = new RoundButton("Describir Tabla", new Color(0x153f59), new Color(0x537491), Color.WHITE);
+describirTablaButton.setEnabled(false);
+describirTablaButton.setForeground(Color.WHITE); // Establecer color de texto
+
 
         // ActionListener para el botón "Describir Tabla"
         describirTablaButton.addActionListener(new ActionListener() {
@@ -109,12 +118,21 @@ tableModel.addTableModelListener(new TableModelListener() {
         // Agregar los componentes al panel derecho
         panelDerecho.setLayout(new BorderLayout());
         panelDerecho.add(listaTablas, BorderLayout.CENTER);
+           // Colores para el fondo del panel de botones
+int red2 = 148;
+int green2 = 184;
+int blue2 = 215;
+Color buttonPanelColor = new Color(red2, green2, blue2);
 
-        // Crear un panel para los botones
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
-        buttonPanel.add(describirTablaButton);
-        buttonPanel.add(ingresarDatosButton);
+// Crear un panel para los botones
+JPanel buttonPanel = new JPanel();
+buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+buttonPanel.setBackground(buttonPanelColor); // Establecer el color de fondo
+
+buttonPanel.add(describirTablaButton);
+buttonPanel.add(ingresarDatosButton);
+
+        
 
         panelDerecho.add(buttonPanel, BorderLayout.SOUTH);
 
